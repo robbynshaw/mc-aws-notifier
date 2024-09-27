@@ -3,7 +3,7 @@
 {
   "name": "Minecraft Plugin",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "ghcr.io/devcontainers/templates/java:4.0.2",
+  "image": "ghcr.io/devcontainers/templates/java:1-22-bookworm",
 
   // "features": {
   //   "ghcr.io/devcontainers/features/java:1": {
