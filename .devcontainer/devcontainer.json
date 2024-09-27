@@ -5,11 +5,11 @@
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "ghcr.io/devcontainers/templates/java:4.0.2",
 
-  "features": {
-    "ghcr.io/devcontainers/features/java:1": {
-      "installGradle": true
-    }
-  }
+  // "features": {
+  //   "ghcr.io/devcontainers/features/java:1": {
+  //     "installGradle": true
+  //   }
+  // }
 
   // Use this environment variable if you need to bind mount your local source code into a new container.
   //   "remoteEnv": {
@@ -23,7 +23,11 @@
   // "postCreateCommand": "docker --version",
 
   // Configure tool-specific properties.
-  // "customizations": {},
+  "customizations": {
+    "vscode": {
+      "extensions": ["vscjava.vscode-java-pack"]
+    }
+  }
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
