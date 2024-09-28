@@ -13,8 +13,23 @@ import org.bukkit.plugin.java.JavaPlugin;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ecs.EcsClient;
+import software.amazon.awssdk.services.ecs.model.Attachment;
+import software.amazon.awssdk.services.ecs.model.DescribeTasksRequest;
+import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
+import software.amazon.awssdk.services.ecs.model.KeyValuePair;
+import software.amazon.awssdk.services.ecs.model.Task;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
+import software.amazon.awssdk.services.route53.Route53Client;
+import software.amazon.awssdk.services.route53.model.Change;
+import software.amazon.awssdk.services.route53.model.ChangeAction;
+import software.amazon.awssdk.services.route53.model.ChangeBatch;
+import software.amazon.awssdk.services.route53.model.ChangeResourceRecordSetsRequest;
+import software.amazon.awssdk.services.route53.model.RRType;
+import software.amazon.awssdk.services.route53.model.ResourceRecord;
+import software.amazon.awssdk.services.route53.model.ResourceRecordSet;
+import software.amazon.awssdk.services.route53.model.Route53Exception;
 
 public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     private boolean worldIsActive = false;
@@ -26,7 +41,12 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     private int activeUsers = 0;
 
     private final String CLUSTER_NAME;
+    private final String TASK_ARN;
+    private final String SERVER_NAME;
     private final String SERVICE_ARN;
+    private final String HOSTED_ZONE_ID;
+
+    private final Region REGION = Region.US_EAST_1;
 
     @Getter
     @Accessors(fluent = true)
@@ -40,7 +60,10 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         shutdownTimeoutMS = 1000 * 60 * timeoutMins;
 
         CLUSTER_NAME = System.getenv("CLUSTER_NAME");
+        TASK_ARN = System.getenv("TASK_ARN");
+        SERVER_NAME = System.getenv("SERVER_NAME");
         SERVICE_ARN = System.getenv("SERVICE_ARN");
+        HOSTED_ZONE_ID = System.getenv("HOSTED_ZONE_ID");
     }
 
     @Override
@@ -54,6 +77,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     public void onWorldInit(WorldLoadEvent event) {
         if (!worldIsActive) {
             worldIsActive = true;
+            updateDnsRecord();
             getLogger().info("Looks like the server is up and running.");
             startNewTimeout();
         }
@@ -73,6 +97,96 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         if (activeUsers == 0) {
             startNewTimeout();
         }
+    }
+
+    private void updateDnsRecord() {
+        EcsClient ecs = EcsClient.builder().region(REGION).build();
+        Ec2Client ec2 = Ec2Client.builder().region(REGION).build();
+        Route53Client route53 = Route53Client.builder().region(REGION).build();
+
+        try {
+
+            TaskInfo info = getTaskInfo(ecs);
+            getLogger().info("Our task ID is " + info.ID);
+            getLogger().info("Our ENI is " + info.Eni);
+
+            String ip = getPublicIp(ec2, info.Eni);
+            getLogger().info("Public IP is " + ip);
+
+            addARecord(route53, ip);
+            getLogger().info("DNS record updated successfully!");
+        } catch (UpdateDNSException err) {
+            getLogger().warning("Failed to update DNS record: " + err.getMessage());
+        } finally {
+            ec2.close();
+            ecs.close();
+            route53.close();
+        }
+    }
+
+    private void addARecord(Route53Client client, String ip) throws UpdateDNSException {
+        ChangeBatch changeBatch = ChangeBatch.builder()
+                .comment("Fargate Public IP change for Minecraft Server")
+                .changes(Change.builder()
+                        .action(ChangeAction.UPSERT)
+                        .resourceRecordSet(ResourceRecordSet.builder()
+                                .name(SERVER_NAME)
+                                .type(RRType.A)
+                                .ttl(30L)
+                                .resourceRecords(ResourceRecord.builder().value(ip).build())
+                                .build())
+                        .build())
+                .build();
+
+        ChangeResourceRecordSetsRequest request = ChangeResourceRecordSetsRequest.builder()
+                .hostedZoneId(HOSTED_ZONE_ID)
+                .changeBatch(changeBatch)
+                .build();
+
+        try {
+            client.changeResourceRecordSets(request);
+        } catch (Route53Exception e) {
+            throw new UpdateDNSException("Error updating DNS record: " + e.getMessage());
+        }
+    }
+
+    private TaskInfo getTaskInfo(EcsClient client) throws UpdateDNSException {
+        TaskInfo info = new TaskInfo();
+        DescribeTasksRequest req = DescribeTasksRequest.builder().cluster(CLUSTER_NAME).tasks(TASK_ARN).build();
+
+        DescribeTasksResponse resp = client.describeTasks(req);
+        if (!resp.hasTasks()) {
+            throw new UpdateDNSException("No tasks found");
+        }
+
+        Task task = resp.tasks().get(0);
+        String[] segments = task.taskArn().split("/");
+        if (segments.length == 1) {
+            throw new UpdateDNSException("Unable to find task ID");
+        }
+        info.ID = segments[segments.length - 1];
+
+        if (!task.hasAttachments()) {
+            throw new UpdateDNSException("No attachments on task");
+        }
+
+        Attachment attachment = task.attachments().get(0);
+        if (!attachment.hasDetails()) {
+            throw new UpdateDNSException("Attachment has no details");
+        }
+
+        for (KeyValuePair detail : attachment.details()) {
+            if (detail.name() == "networkInterfaceId") {
+                info.Eni = detail.value();
+                return info;
+            }
+        }
+        throw new UpdateDNSException("No network interface detail found");
+    }
+
+    private String getPublicIp(Ec2Client client, String eni) {
+        return eni;
+        // DescribeAddressesResponse response = client.describeAddresses();
     }
 
     private void cancelTimer() {
@@ -101,7 +215,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     }
 
     private void zeroService() {
-        EcsClient ecsClient = EcsClient.builder().region(Region.US_EAST_1).build();
+        EcsClient ecsClient = EcsClient.builder().region(REGION).build();
 
         UpdateServiceRequest updateServiceRequest = UpdateServiceRequest.builder()
                 .cluster(CLUSTER_NAME)
