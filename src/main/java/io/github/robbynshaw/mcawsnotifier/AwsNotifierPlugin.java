@@ -14,6 +14,9 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeNetworkInterfacesRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeNetworkInterfacesResponse;
+import software.amazon.awssdk.services.ec2.model.NetworkInterface;
 import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.Attachment;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksRequest;
@@ -187,15 +190,32 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
             getLogger().info("Found attachment detail: " + detail.name());
             if (detail.name() == "networkInterfaceId") {
                 info.Eni = detail.value();
-                return info;
             }
         }
-        throw new UpdateDNSException("No network interface detail found");
+        if (info.Eni != null) {
+            throw new UpdateDNSException("No network interface detail found");
+        }
+        return info;
     }
 
-    private String getPublicIp(Ec2Client client, String eni) {
-        return eni;
-        // DescribeAddressesResponse response = client.describeAddresses();
+    private String getPublicIp(Ec2Client client, String eni) throws UpdateDNSException {
+        String result = "";
+        DescribeNetworkInterfacesRequest req = DescribeNetworkInterfacesRequest.builder().networkInterfaceIds(eni)
+                .build();
+        DescribeNetworkInterfacesResponse resp = client.describeNetworkInterfaces(req);
+        if (!resp.hasNetworkInterfaces()) {
+            throw new UpdateDNSException("No network interfaces found for " + eni);
+        }
+        for (NetworkInterface ifc : resp.networkInterfaces()) {
+            String ip = ifc.association().publicIp();
+            if (ip != null && ip != "") {
+                result = ip;
+            }
+        }
+        if (result == null || result == "") {
+            throw new UpdateDNSException("No public IP found");
+        }
+        return result;
     }
 
     private void cancelTimer() {
