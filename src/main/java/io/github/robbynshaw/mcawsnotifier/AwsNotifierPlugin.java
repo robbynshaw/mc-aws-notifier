@@ -184,6 +184,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         }
 
         for (KeyValuePair detail : attachment.details()) {
+            getLogger().info("Found attachment detail: " + detail.name());
             if (detail.name() == "networkInterfaceId") {
                 info.Eni = detail.value();
                 return info;
