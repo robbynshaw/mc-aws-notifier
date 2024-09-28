@@ -19,6 +19,8 @@ import software.amazon.awssdk.services.ecs.model.Attachment;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
 import software.amazon.awssdk.services.ecs.model.KeyValuePair;
+import software.amazon.awssdk.services.ecs.model.ListTasksRequest;
+import software.amazon.awssdk.services.ecs.model.ListTasksResponse;
 import software.amazon.awssdk.services.ecs.model.Task;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
 import software.amazon.awssdk.services.route53.Route53Client;
@@ -41,9 +43,8 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     private int activeUsers = 0;
 
     private final String CLUSTER_NAME;
-    private final String TASK_ARN;
     private final String SERVER_NAME;
-    private final String SERVICE_ARN;
+    private final String SERVICE_NAME;
     private final String HOSTED_ZONE_ID;
 
     private final Region REGION = Region.US_EAST_1;
@@ -60,9 +61,8 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         shutdownTimeoutMS = 1000 * 60 * timeoutMins;
 
         CLUSTER_NAME = System.getenv("CLUSTER_NAME");
-        TASK_ARN = System.getenv("TASK_ARN");
         SERVER_NAME = System.getenv("SERVER_NAME");
-        SERVICE_ARN = System.getenv("SERVICE_ARN");
+        SERVICE_NAME = System.getenv("SERVICE_NAME");
         HOSTED_ZONE_ID = System.getenv("HOSTED_ZONE_ID");
     }
 
@@ -152,7 +152,15 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
 
     private TaskInfo getTaskInfo(EcsClient client) throws UpdateDNSException {
         TaskInfo info = new TaskInfo();
-        DescribeTasksRequest req = DescribeTasksRequest.builder().cluster(CLUSTER_NAME).tasks(TASK_ARN).build();
+
+        ListTasksRequest lsReq = ListTasksRequest.builder().cluster(CLUSTER_NAME).serviceName(SERVICE_NAME).build();
+        ListTasksResponse lsResp = client.listTasks(lsReq);
+        if (!lsResp.hasTaskArns()) {
+            throw new UpdateDNSException("No tasks found");
+        }
+        String taskArn = lsResp.taskArns().get(0);
+
+        DescribeTasksRequest req = DescribeTasksRequest.builder().cluster(CLUSTER_NAME).tasks(taskArn).build();
 
         DescribeTasksResponse resp = client.describeTasks(req);
         if (!resp.hasTasks()) {
@@ -219,7 +227,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
 
         UpdateServiceRequest updateServiceRequest = UpdateServiceRequest.builder()
                 .cluster(CLUSTER_NAME)
-                .service(SERVICE_ARN)
+                .service(SERVICE_NAME)
                 .desiredCount(0) // Set desired instances to zero
                 .build();
 
