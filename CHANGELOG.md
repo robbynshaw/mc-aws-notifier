@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.0.0...v1.1.0) (2024-09-28)
+
+
+### Features
+
+* added dns update ([c73c965](https://github.com/robbynshaw/mc-aws-notifier/commit/c73c965acc008a64482608868bb722158ff78417))
+* merged upstream changes ([02cfbc8](https://github.com/robbynshaw/mc-aws-notifier/commit/02cfbc8789ef03ff574244c3264157d38d2e8441))
+
 # 1.0.0 (2024-09-28)
 
 
