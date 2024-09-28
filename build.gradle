@@ -43,7 +43,7 @@ compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs += ["-parameters"]
     options.fork = true
-    options.forkOptions.executable = '/usr/lib/jvm/msopenjdk-current/bin/javac'
+    // options.forkOptions.executable = '/usr/lib/jvm/msopenjdk-current/bin/javac'
 }
 
 archivesBaseName = project.property("pluginName")
