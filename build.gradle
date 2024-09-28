@@ -68,6 +68,8 @@ dependencies {
 
     implementation platform("software.amazon.awssdk:bom:2.28.11")
     implementation 'software.amazon.awssdk:ecs'
+    implementation 'software.amazon.awssdk:ec2'
+    implementation 'software.amazon.awssdk:route53'
 
     // Annotation Command Framework: https://github.com/aikar/commands
     // Use shadow to shade the library into your plugin
