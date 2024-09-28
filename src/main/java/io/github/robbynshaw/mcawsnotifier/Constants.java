@@ -1,4 +1,4 @@
-package net.silthus.template;
+package io.github.robbynshaw.mcawsnotifier;
 
 public final class Constants {
 

@@ -3,12 +3,12 @@
 {
   "name": "Minecraft Plugin",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/java:1-21",
+  "image": "mcr.microsoft.com/devcontainers/java:1-17-bookworm",
 
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "none",
-      "installMaven": "false",
+      "installMaven": "true",
       "installGradle": "true"
     }
   },
