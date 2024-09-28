@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.2...v1.1.3) (2024-09-28)
+
+
+### Bug Fixes
+
+* used describe interfaces for lookup ([80f8d57](https://github.com/robbynshaw/mc-aws-notifier/commit/80f8d57669b521fdc150e40bd4555dd11e8b8a6e))
+
 ## [1.1.2](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.1...v1.1.2) (2024-09-28)
 
 
