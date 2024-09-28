@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.0...v1.1.1) (2024-09-28)
+
+
+### Bug Fixes
+
+* switch to service name instead of arn ([461395e](https://github.com/robbynshaw/mc-aws-notifier/commit/461395e3902b8af163f405f6f71af6c7e102a70d))
+
 # [1.1.0](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.0.0...v1.1.0) (2024-09-28)
 
 
