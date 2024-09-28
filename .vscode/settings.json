@@ -1,3 +1,6 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current",
+    "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
+    "java.compile.nullAnalysis.mode": "automatic"
 }
