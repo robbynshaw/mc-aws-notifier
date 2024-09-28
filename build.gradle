@@ -35,7 +35,7 @@ spigot {
     apiVersion = project.property("apiVersion")
     load = STARTUP
     // depends = ['']
-    softDepends = ['Vault']
+    // softDepends = ['Vault']
     excludeLibraries = ['*']
 }
 
@@ -66,18 +66,12 @@ dependencies {
     // using using paper-api
     implementation paper(mcVersion)
 
-    // Add your dependencies here
-    // Here are some opinionated dependencies that might help you with your plugin development:
+    implementation platform("software.amazon.awssdk:bom:2.28.11")
+    implementation 'software.amazon.awssdk:ecs'
 
     // Annotation Command Framework: https://github.com/aikar/commands
     // Use shadow to shade the library into your plugin
     shadow "co.aikar:acf-paper:0.5.1-SNAPSHOT"
-    // Vault (https://github.com/MilkBowl/VaultAPI) for economy, permissions and chat API
-    // this dependency needs to be present at runtime, meaning Vault.jar needs to be in your plugins folder
-    implementation vaultAll()
-
-    // implementation platform("software.amazon.awssdk:bom:2.21.1")
-    // implementation 'software.amazon.awssdk.services.ecs'
 
     // Test dependencies
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
