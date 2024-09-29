@@ -45,12 +45,13 @@ import software.amazon.awssdk.services.route53.model.Route53Exception;
 
 public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     private boolean worldIsActive = false;
-    private boolean timerIsRunning = false;
-    private final Timer timer;
     private int shutdownTimeoutMS;
     private final int defaultTimeoutMins = 1;
     private final int timeoutMins;
     private int activeUsers = 0;
+
+    private final Timer timer;
+    private CheckUsersTask checkUsersTask;
 
     private final String CLUSTER_NAME;
     private final String SERVER_NAME;
@@ -223,20 +224,16 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     }
 
     private void cancelTimer() {
-        try {
-            if (timerIsRunning) {
-                timer.cancel();
-            }
-        } catch (IllegalStateException ex) {
-            getLogger().warning("Timer was already cancelled");
+        if (checkUsersTask != null) {
+            checkUsersTask.cancel();
         }
     }
 
     private void startNewTimeout() {
-        getLogger().info("Scheduling an active player check in " + shutdownTimeoutMS + " minute(s)...");
+        getLogger().info("Scheduling an active player check in " + timeoutMins + " minute(s)...");
         cancelTimer();
-        timer.schedule(new CheckUsersTask(), shutdownTimeoutMS);
-        timerIsRunning = true;
+        checkUsersTask = new CheckUsersTask();
+        timer.schedule(checkUsersTask, shutdownTimeoutMS);
     }
 
     private void checkForActiveUsers() {
@@ -290,7 +287,6 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         @Override
         public void run() {
             checkForActiveUsers();
-            timerIsRunning = false;
         }
     }
 
