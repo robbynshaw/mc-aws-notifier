@@ -83,7 +83,6 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
             updateDnsRecord();
             getLogger().info("Looks like the server is up and running.");
             startNewTimeout();
-            timer.schedule(new SetPublicIpTask(), 30000);
         }
     }
 
@@ -189,18 +188,15 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
 
         for (KeyValuePair detail : attachment.details()) {
             getLogger().info("Found attachment detail: '" + detail.name() + "':'" + detail.value());
-            if (detail.name() == "networkInterfaceId") {
+            if (detail.name().equals("networkInterfaceId")) {
                 info.Eni = detail.value();
+                return info;
             }
         }
-        if (info.Eni == null) {
-            throw new UpdateDNSException("No network interface detail found");
-        }
-        return info;
+        throw new UpdateDNSException("No network interface detail found");
     }
 
     private String getPublicIp(Ec2Client client, String eni) throws UpdateDNSException {
-        String result = "";
         DescribeNetworkInterfacesRequest req = DescribeNetworkInterfacesRequest.builder().networkInterfaceIds(eni)
                 .build();
         DescribeNetworkInterfacesResponse resp = client.describeNetworkInterfaces(req);
@@ -209,14 +205,11 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         }
         for (NetworkInterface ifc : resp.networkInterfaces()) {
             String ip = ifc.association().publicIp();
-            if (ip != null && ip != "") {
-                result = ip;
+            if (ip != null && !ip.isEmpty()) {
+                return ip;
             }
         }
-        if (result == null || result == "") {
-            throw new UpdateDNSException("No public IP found");
-        }
-        return result;
+        throw new UpdateDNSException("No public IP found");
     }
 
     private void cancelTimer() {
@@ -263,13 +256,6 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         public void run() {
             checkForActiveUsers();
             timerIsRunning = false;
-        }
-    }
-
-    private class SetPublicIpTask extends TimerTask {
-        @Override
-        public void run() {
-            updateDnsRecord();
         }
     }
 
