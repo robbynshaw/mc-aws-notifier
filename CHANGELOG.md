@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.3...v1.1.4) (2024-09-29)
+
+
+### Bug Fixes
+
+* add dns check delay ([7daa223](https://github.com/robbynshaw/mc-aws-notifier/commit/7daa2233bccc2a564afb24c523bdef633afa7f1e))
+
 ## [1.1.3](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.2...v1.1.3) (2024-09-28)
 
 
