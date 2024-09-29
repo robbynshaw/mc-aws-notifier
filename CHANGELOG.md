@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.2.0...v1.2.1) (2024-09-29)
+
+
+### Bug Fixes
+
+* fixed cancel timer bug ([6991577](https://github.com/robbynshaw/mc-aws-notifier/commit/699157747603cd78c3b2d271ede954cfecf59389))
+
 # [1.2.0](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.5...v1.2.0) (2024-09-29)
 
 
