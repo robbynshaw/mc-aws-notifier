@@ -1,5 +1,10 @@
 package io.github.robbynshaw.mcawsnotifier;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -9,6 +14,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import com.google.gson.Gson;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -49,6 +56,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
     private final String SERVER_NAME;
     private final String SERVICE_NAME;
     private final String HOSTED_ZONE_ID;
+    private final String WEBHOOK_URL;
 
     private final Region REGION = Region.US_EAST_1;
 
@@ -67,6 +75,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         SERVER_NAME = System.getenv("SERVER_NAME");
         SERVICE_NAME = System.getenv("SERVICE_NAME");
         HOSTED_ZONE_ID = System.getenv("HOSTED_ZONE_ID");
+        WEBHOOK_URL = System.getenv("WEBHOOK_URL");
     }
 
     @Override
@@ -82,6 +91,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
             worldIsActive = true;
             updateDnsRecord();
             getLogger().info("Looks like the server is up and running.");
+            sendStatusMessage("The server is ready for you!");
             startNewTimeout();
         }
     }
@@ -233,6 +243,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         getLogger().info("Checking active players: " + activeUsers + " found.");
         if (activeUsers == 0) {
             getLogger().info("No active users for the last " + timeoutMins + " minute(s). Shutting down...");
+            sendStatusMessage("Shutting down the server due to inactivity.");
             zeroService();
         }
     }
@@ -249,6 +260,30 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         ecsClient.updateService(updateServiceRequest).service();
 
         ecsClient.close();
+    }
+
+    private void sendStatusMessage(String message) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            DiscordMessageBody body = new DiscordMessageBody();
+            body.content = message;
+            Gson gson = new Gson();
+            String json = gson.toJson(body);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(WEBHOOK_URL))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+            client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Handle the response
+            getLogger().info("Status message sent");
+        } catch (IOException | InterruptedException e) {
+            getLogger().warning("Failed to send notification message: " + e.getMessage());
+        }
     }
 
     private class CheckUsersTask extends TimerTask {
