@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.4...v1.1.5) (2024-09-29)
+
+
+### Bug Fixes
+
+* fixed string compare ([6c5d63c](https://github.com/robbynshaw/mc-aws-notifier/commit/6c5d63cc6240bb8fc4abca9294f43509a0902705))
+
 ## [1.1.4](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.3...v1.1.4) (2024-09-29)
 
 
