@@ -83,6 +83,7 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
             updateDnsRecord();
             getLogger().info("Looks like the server is up and running.");
             startNewTimeout();
+            timer.schedule(new SetPublicIpTask(), 30000);
         }
     }
 
@@ -187,12 +188,12 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         }
 
         for (KeyValuePair detail : attachment.details()) {
-            getLogger().info("Found attachment detail: " + detail.name());
+            getLogger().info("Found attachment detail: '" + detail.name() + "':'" + detail.value());
             if (detail.name() == "networkInterfaceId") {
                 info.Eni = detail.value();
             }
         }
-        if (info.Eni != null) {
+        if (info.Eni == null) {
             throw new UpdateDNSException("No network interface detail found");
         }
         return info;
@@ -262,6 +263,13 @@ public class AwsNotifierPlugin extends JavaPlugin implements Listener {
         public void run() {
             checkForActiveUsers();
             timerIsRunning = false;
+        }
+    }
+
+    private class SetPublicIpTask extends TimerTask {
+        @Override
+        public void run() {
+            updateDnsRecord();
         }
     }
 
