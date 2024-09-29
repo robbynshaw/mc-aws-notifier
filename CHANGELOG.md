@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.5...v1.2.0) (2024-09-29)
+
+
+### Features
+
+* added discord messaging ([44c76c2](https://github.com/robbynshaw/mc-aws-notifier/commit/44c76c20eb059c96a82599d643a9bdc8bc0953cd))
+
 ## [1.1.5](https://github.com/robbynshaw/mc-aws-notifier/compare/v1.1.4...v1.1.5) (2024-09-29)
 
 
